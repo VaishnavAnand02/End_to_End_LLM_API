@@ -23,3 +23,5 @@ async def generate(request: Query):
     response_text = output['choices'][0]['message']['content']
 
     return {"response": response_text}
+
+#finished project

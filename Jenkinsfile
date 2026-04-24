@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // IMPORTANT: Replace 'yourdockerhubuser' with your actual Docker Hub username
-        DOCKER_IMAGE = 'yourdockerhubuser/gguf-endpoint'
+        DOCKER_IMAGE = 'vaishnavanand/gguf-endpoint'
     }
 
     stages {

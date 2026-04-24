@@ -11,11 +11,15 @@ class Query(BaseModel):
     max_tokens: int = MAX_TOKENS
 
 @app.post("/generate")
-async def generate(query: Query):
-    output = llm(
-        prompt = query.prompt,
-        max_tokens = query.max_tokens,
-        stop = ["Q:","\n"]
+async def generate(request: Query):
+    # THE NEW WAY (Perfect for Llama 3.1)
+    output = llm.create_chat_completion(
+    messages=[
+        {"role": "system", "content": "You are a helpful, highly technical AI assistant."},
+        {"role": "user", "content": request.prompt}
+    ],
+    max_tokens=request.max_tokens
     )
+    response_text = output['choices'][0]['message']['content']
 
-    return {"response": output["choices"][0]["text"]}
+    return {"response": response_text}

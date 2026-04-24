@@ -1,19 +1,16 @@
 ---
-- name: Configure MLOps Endpoint
+- name: Deploy MLOps Endpoint (Phase 4 - Pull & Run)
   hosts: ml_servers
-  become: yes # Run as sudo/root
+  become: yes 
 
   tasks:
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install required packages (Docker dependencies)
+    - name: Install required packages
       apt:
-        name: 
-          - ca-certificates
-          - curl
-          - gnupg
+        name: [ca-certificates, curl, gnupg]
         state: present
 
     - name: Add Docker GPG key
@@ -28,12 +25,7 @@
 
     - name: Install Docker and Docker Compose
       apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]
         state: present
 
     - name: Ensure Docker service is running
@@ -52,28 +44,15 @@
         - /home/ubuntu/gguf_endpoint
         - /home/ubuntu/gguf_endpoint/model
 
-        # ADD THIS NEW TASK FIRST
-    - name: Clean old app directories to prevent nested src/src inception
-      file:
-        path: /home/ubuntu/gguf_endpoint/{{ item }}
-        state: absent
-      loop:
-        - src
-        - settings
-
-    - name: Copy application files to server
+    # We ONLY copy the docker-compose.yml file now. Everything else is inside the Docker image!
+    - name: Copy docker-compose.yml to server
       copy:
-        src: ../../{{ item }} # Assumes you run ansible from the 'ansible' directory
-        dest: /home/ubuntu/gguf_endpoint/{{ item }}
+        src: ../../docker-compose.yml 
+        dest: /home/ubuntu/gguf_endpoint/docker-compose.yml
         owner: ubuntu
         group: ubuntu
-      loop:
-        - src
-        - settings
-        - requirements.txt
-        - Dockerfile
-        - docker-compose.yml
 
+    # We keep the model download here so we don't have to push a 5GB Docker image to Docker Hub
     - name: Check if GGUF model already exists on the server
       stat:
         path: /home/ubuntu/gguf_endpoint/model/llama.gguf
@@ -84,11 +63,15 @@
         url: "https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf" 
         dest: /home/ubuntu/gguf_endpoint/model/llama.gguf
         mode: '0644'
-      when: not model_file.stat.exists # This acts as a strict "Skip" button
+      when: not model_file.stat.exists 
 
-    - name: Build and start the Docker container
-      command: docker compose up --build -d
+    # THE MAGIC OF PHASE 4: Just pull and run! Takes 10 seconds and uses almost zero RAM.
+    - name: Pull the pre-built Docker image from Docker Hub
+      command: docker compose pull
       args:
         chdir: /home/ubuntu/gguf_endpoint
 
-
+    - name: Start the API container
+      command: docker compose up -d
+      args:
+        chdir: /home/ubuntu/gguf_endpoint

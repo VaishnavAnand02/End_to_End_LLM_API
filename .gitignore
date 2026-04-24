@@ -1,2 +1,22 @@
-model
+# Machine Learning
+model/
+
+# Security / Keys
 *.pem
+
+# Terraform Local State & Secrets
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# (Optional) Ignore Python pycache if you run scripts locally
+__pycache__/
+*.pyc

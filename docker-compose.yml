@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    image: vaishnavanand/gguf-endpoint:latest
     ports:
       - "8002:8002"
     volumes:
